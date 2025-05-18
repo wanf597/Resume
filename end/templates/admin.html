@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统管理</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="/static/css/main.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse min-vh-100">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active text-white" href="#" data-page="dashboard">
+                                <i class="bi bi-speedometer2"></i> 系统概览
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="users">
+                                <i class="bi bi-people"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="resumes">
+                                <i class="bi bi-file-text"></i> 简历管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="jobs">
+                                <i class="bi bi-briefcase"></i> 岗位管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="applications">
+                                <i class="bi bi-send"></i> 投递管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#" data-page="feedback">
+                                <i class="bi bi-star"></i> 推荐评分反馈
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">系统管理</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button id="logoutBtn" class="btn btn-outline-danger">
+                            <i class="bi bi-box-arrow-right"></i> 退出登录
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 系统概览 -->
+                <div id="dashboard" class="content-page">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title">用户总数</h5>
+                                    <p class="card-text display-4" id="totalUsers">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-white bg-success">
+                                <div class="card-body">
+                                    <h5 class="card-title">简历总数</h5>
+                                    <p class="card-text display-4" id="totalResumes">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-white bg-info">
+                                <div class="card-body">
+                                    <h5 class="card-title">岗位总数</h5>
+                                    <p class="card-text display-4" id="totalJobs">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户管理 -->
+                <div id="users" class="content-page d-none">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">用户列表</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>用户名</th>
+                                            <th>邮箱</th>
+                                            <th>用户类型</th>
+                                            <th>注册时间</th>
+                                            <th>最后登录</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersList"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 简历管理 -->
+                <div id="resumes" class="content-page d-none">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">简历列表</h5>
+                                <a href="/api/jobseeker/recommend" class="btn btn-primary">上传并解析简历</a>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>用户名</th>
+                                            <th>文件名</th>
+                                            <th>上传时间</th>
+                                            <th>更新时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resumesList"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 岗位管理 -->
+                <div id="jobs" class="content-page d-none">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">岗位列表</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>岗位名称</th>
+                                            <th>发布者</th>
+                                            <th>发布时间</th>
+                                            <th>状态</th>
+                                            <th>审核状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="jobsList"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 投递管理 -->
+                <div id="applications" class="content-page d-none">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">投递记录管理</h5>
+                            <div id="applicationsTableContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 推荐评分反馈查看模块 -->
+                <div id="feedback" class="content-page d-none">
+                    <div class="card mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">推荐评分反馈记录</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="feedbackTableContainer">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mt-2">正在加载评分反馈...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 简历详情模态框 -->
+    <div class="modal fade" id="resumeDetailsModal" tabindex="-1" aria-labelledby="resumeDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resumeDetailsModalLabel">简历详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>用户名：</strong><span id="resumeDetailUsername"></span></p>
+                            <p><strong>文件名：</strong><span id="resumeDetailFilename"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>上传时间：</strong><span id="resumeDetailCreatedAt"></span></p>
+                            <p><strong>更新时间：</strong><span id="resumeDetailUpdatedAt"></span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>简历内容</h6>
+                        <div class="p-3 bg-light rounded" id="resumeDetailContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 岗位详情模态框 -->
+    <div class="modal fade" id="jobDetailsModal" tabindex="-1" aria-labelledby="jobDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobDetailsModalLabel">岗位详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>岗位名称：</strong><span id="jobDetailTitle"></span></p>
+                            <p><strong>发布者：</strong><span id="jobDetailRecruiter"></span></p>
+                            <p><strong>发布时间：</strong><span id="jobDetailCreatedAt"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>薪资范围：</strong><span id="jobDetailSalary"></span></p>
+                            <p><strong>工作地点：</strong><span id="jobDetailLocation"></span></p>
+                            <p><strong>公司名称：</strong><span id="jobDetailCompany"></span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>岗位描述</h6>
+                        <div class="p-3 bg-light rounded" id="jobDetailDescription"></div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>岗位要求</h6>
+                        <div class="p-3 bg-light rounded" id="jobDetailRequirements"></div>
+                    </div>
+                    <div id="jobAuditActions" class="d-none">
+                        <hr>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-success" id="approveJobBtn">通过审核</button>
+                            <button class="btn btn-danger" id="rejectJobBtn">拒绝审核</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/plugins/bootstrap5.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面切换
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                
+                // 更新导航状态
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 显示对应页面
+                document.querySelectorAll('.content-page').forEach(p => p.classList.add('d-none'));
+                document.getElementById(page).classList.remove('d-none');
+                
+                // 加载页面数据
+                loadPageData(page);
+            });
+        });
+
+        // 加载页面数据
+        function loadPageData(page) {
+            switch(page) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'resumes':
+                    loadResumes();
+                    break;
+                case 'jobs':
+                    loadJobs();
+                    break;
+                case 'applications':
+                    loadApplications();
+                    break;
+                case 'feedback':
+                    loadFeedback();
+                    break;
+            }
+        }
+
+        // 加载仪表盘数据
+        function loadDashboard() {
+            fetch('/api/admin/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('totalUsers').textContent = data.stats.users;
+                    document.getElementById('totalResumes').textContent = data.stats.resumes;
+                    document.getElementById('totalJobs').textContent = data.stats.jobs;
+                }
+            });
+        }
+
+        // 加载用户列表
+        function loadUsers() {
+            fetch('/api/admin/users')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('usersList');
+                    tbody.innerHTML = '';
+                    data.users.forEach(user => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td>${user.userType === 'admin' ? '管理员' : (user.userType === 'jobseeker' ? '求职者' : '招聘者')}</td>
+                                <td>${user.createdAt}</td>
+                                <td>${user.lastLogin}</td>
+                                <td>
+                                    <span class="badge bg-${user.status === 'active' ? 'success' : 'danger'}">
+                                        ${user.status === 'active' ? '正常' : '禁用'}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${user.userType !== 'admin' ? `
+                                    <button class="btn btn-sm btn-${user.status === 'active' ? 'danger' : 'success'}"
+                                            onclick="toggleUserStatus('${user._id}', '${user.status}')">
+                                        ${user.status === 'active' ? '禁用' : '启用'}
+                                    </button>
+                                    <button class="btn btn-sm btn-danger ms-1" onclick="deleteUser('${user._id}')">
+                                        删除
+                                    </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+        }
+
+        // 加载简历列表
+        function loadResumes() {
+            fetch('/api/admin/resumes')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('resumesList');
+                    tbody.innerHTML = '';
+                    data.resumes.forEach(resume => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${resume.data.name}</td>
+                                <td>${resume.data.filename}</td>
+                                <td>${resume.created_at}</td>
+                                <td>${resume.updated_at}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewResumeDetails('${resume._id}')">
+                                        查看详情
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteResume('${resume._id}')">
+                                        删除
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+        }
+        
+        // 查看简历详情
+        let currentResumeId = null;
+        const resumeDetailsModal = new bootstrap.Modal(document.getElementById('resumeDetailsModal'));
+        
+        function viewResumeDetails(resumeId) {
+            currentResumeId = resumeId;
+            
+            // 获取简历详情
+            fetch(`/api/admin/resumes/${resumeId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const resume = data.resume;
+                    // 填充简历详情
+                    document.getElementById('resumeDetailUsername').textContent = resume.data.name || '无';
+                    document.getElementById('resumeDetailFilename').textContent = resume.data.filename || '无';
+                    document.getElementById('resumeDetailCreatedAt').textContent = resume.created_at || '无';
+                    document.getElementById('resumeDetailUpdatedAt').textContent = resume.updated_at || '无';
+                    // 简历内容分块展示
+                    let contentHtml = '';
+                    if (resume.data && Array.isArray(resume.data.blocks) && resume.data.blocks.length > 0) {
+                        resume.data.blocks.forEach(block => {
+                            contentHtml += `<div class='fw-bold mt-3 mb-1'>${block.category}</div><div class='bg-light rounded p-2 mb-2'>${(block.content||'').replace(/\n/g,'<br>')}</div>`;
+                        });
+                    } else {
+                        contentHtml = `<div class='alert alert-secondary'>暂无内容预览</div>`;
+                    }
+                    document.getElementById('resumeDetailContent').innerHTML = contentHtml;
+                    
+                    resumeDetailsModal.show();
+                } else {
+                    alert(data.error || '获取简历信息失败');
+                }
+            })
+            .catch(error => {
+                console.error('获取简历详情失败:', error);
+                alert('获取简历详情失败');
+            });
+        }
+
+        // 加载岗位列表
+        function loadJobs() {
+            fetch('/api/admin/jobs')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tbody = document.getElementById('jobsList');
+                    tbody.innerHTML = '';
+                    data.jobs.forEach(job => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${job.title}</td>
+                                <td>${job.recruiter_name}</td>
+                                <td>${job.created_at}</td>
+                                <td>
+                                    <span class="badge bg-${job.status === 'active' ? 'success' : 'danger'}">
+                                        ${job.status === 'active' ? '正常' : '已关闭'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-${job.audit_status === 'approved' ? 'success' : job.audit_status === 'rejected' ? 'danger' : 'warning'}">
+                                        ${job.audit_status === 'approved' ? '已通过' : job.audit_status === 'rejected' ? '已拒绝' : '待审核'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewJobDetails('${job._id}')">查看详情</button>
+                                    <button class="btn btn-sm btn-warning" onclick="showJobAuditModal('${job._id}','${job.audit_status}','${job.audit_comment||''}')">修改审核状态</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteJob('${job._id}')">删除</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+        }
+
+        // 切换用户状态
+        function toggleUserStatus(userId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+            fetch(`/api/admin/users/${userId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers();
+                }
+            });
+        }
+
+        // 删除简历
+        function deleteResume(resumeId) {
+            if (confirm('确定要删除这份简历吗？')) {
+                fetch(`/api/admin/resumes/${resumeId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadResumes();
+                    }
+                });
+            }
+        }
+
+        // 删除岗位
+        function deleteJob(jobId) {
+            if (confirm('确定要删除这个岗位吗？')) {
+                fetch(`/api/admin/jobs/${jobId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadJobs();
+                    }
+                });
+            }
+        }
+
+        // 查看岗位详情
+        let currentJobId = null;
+        const jobDetailsModal = new bootstrap.Modal(document.getElementById('jobDetailsModal'));
+        
+        function viewJobDetails(jobId) {
+            currentJobId = jobId;
+            
+            // 获取岗位详情
+            fetch(`/api/admin/jobs/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const job = data.job;
+                    // 填充岗位详情
+                    document.getElementById('jobDetailTitle').textContent = job.title || '无';
+                    document.getElementById('jobDetailRecruiter').textContent = job.recruiter_name || '无';
+                    document.getElementById('jobDetailCreatedAt').textContent = job.created_at || '无';
+                    document.getElementById('jobDetailSalary').textContent = job.salary_range || '无';
+                    document.getElementById('jobDetailLocation').textContent = job.location || '无';
+                    document.getElementById('jobDetailCompany').textContent = job.company || '无';
+                    document.getElementById('jobDetailDescription').textContent = job.description || '无';
+                    document.getElementById('jobDetailRequirements').textContent = job.requirements || '无';
+                    
+                    // 显示或隐藏审核按钮
+                    const auditActions = document.getElementById('jobAuditActions');
+                    if (job.audit_status === 'pending') {
+                        auditActions.classList.remove('d-none');
+                    } else {
+                        auditActions.classList.add('d-none');
+                    }
+                    
+                    // 显示模态框
+                    jobDetailsModal.show();
+                } else {
+                    alert(data.error || '获取岗位信息失败');
+                }
+            })
+            .catch(error => {
+                console.error('获取岗位详情失败:', error);
+                alert('获取岗位详情失败');
+            });
+        }
+        
+        // 审核岗位
+        function auditJob(jobId, action) {
+            const comment = prompt(action === 'approve' ? '请输入通过原因（可选）' : '请输入拒绝原因（必填）');
+            if (action === 'reject' && !comment) {
+                alert('请输入拒绝原因');
+                return;
+            }
+            
+            fetch(`/api/admin/jobs/audit/${jobId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: action,
+                    comment: comment || ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (jobDetailsModal._isShown) {
+                        jobDetailsModal.hide();
+                    }
+                    loadJobs();
+                } else {
+                    alert(data.error || '审核失败');
+                }
+            });
+        }
+
+        // 初始加载仪表盘
+        loadDashboard();
+        
+        // 为模态框中的审核按钮添加事件监听
+        document.getElementById('approveJobBtn').addEventListener('click', function() {
+            if (currentJobId) {
+                auditJob(currentJobId, 'approve');
+            }
+        });
+        
+        document.getElementById('rejectJobBtn').addEventListener('click', function() {
+            if (currentJobId) {
+                auditJob(currentJobId, 'reject');
+            }
+        });
+
+        // 加载推荐评分反馈
+        function loadFeedbackTable(page=1) {
+            const container = document.getElementById('feedbackTableContainer');
+            container.innerHTML = `<div class='text-center py-4'><div class='spinner-border text-primary'></div><p class='mt-2'>正在加载评分反馈...</p></div>`;
+            fetch(`/api/admin/recommend_feedback?page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        container.innerHTML = `<div class='alert alert-danger'>${data.error || '加载失败'}</div>`;
+                        return;
+                    }
+                    if (!data.feedbacks || data.feedbacks.length === 0) {
+                        container.innerHTML = `<div class='alert alert-info'>暂无评分反馈记录</div>`;
+                        return;
+                    }
+                    let html = `<table class='table table-bordered table-hover align-middle'><thead><tr><th>用户ID</th><th>用户类型</th><th>推荐内容ID列表</th><th>场景</th><th>评分</th><th>备注</th><th>时间</th></tr></thead><tbody>`;
+                    data.feedbacks.forEach(fb => {
+                        // 用户类型和场景转中文
+                        let userTypeZh = fb.user_type === 'jobseeker' ? '求职者' : (fb.user_type === 'recruiter' ? '招聘者' : fb.user_type);
+                        let sceneZh = fb.scene === 'job_recommend' ? '岗位推荐' : (fb.scene === 'talent_match' ? '人才检索' : fb.scene);
+                        html += `<tr><td>${fb.user_id}</td><td>${userTypeZh}</td><td>${(fb.recommend_list || []).join('<br>')}</td><td>${sceneZh}</td><td>${fb.score}</td><td>${fb.comment || ''}</td><td>${fb.created_at}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                })
+                .catch(() => {
+                    container.innerHTML = `<div class='alert alert-danger'>加载失败</div>`;
+                });
+        }
+
+        // 页面加载后自动加载反馈表
+        if (document.getElementById('feedbackTableContainer')) loadFeedbackTable();
+
+        // 加载投递记录
+        function loadApplications() {
+            const container = document.getElementById('applicationsTableContainer');
+            container.innerHTML = `<div class='text-center py-4'><div class='spinner-border text-primary'></div><p class='mt-2'>正在加载投递记录...</p></div>`;
+            fetch('/api/admin/applications')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        container.innerHTML = `<div class='alert alert-danger'>${data.error || '加载失败'}</div>`;
+                        return;
+                    }
+                    if (!data.applications || data.applications.length === 0) {
+                        container.innerHTML = `<div class='alert alert-info'>暂无投递记录</div>`;
+                        return;
+                    }
+                    let html = `<table class='table table-bordered table-hover align-middle'><thead><tr><th>投递人</th><th>岗位</th><th>状态</th><th>备注</th><th>时间</th><th>操作</th></tr></thead><tbody>`;
+                    data.applications.forEach(app => {
+                        html += `<tr>
+                            <td>${app.user_name}</td>
+                            <td>${app.job_title}</td>
+                            <td>${app.status}</td>
+                            <td>${app.comment || ''}</td>
+                            <td>${app.created_at}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="showAppStatusModal('${app._id}','${app.status}','${app.comment||''}')">修改状态</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                })
+                .catch(() => {
+                    container.innerHTML = `<div class='alert alert-danger'>加载失败</div>`;
+                });
+        }
+
+        // 处理投递申请
+        function adminHandleApplication(id, action) {
+            let comment = '';
+            let status = '';
+            if (action === 'accept') {
+                status = 'accepted';
+            } else if (action === 'reject') {
+                status = 'rejected';
+                comment = prompt('请输入拒绝原因');
+                if (!comment) {
+                    alert('必须填写拒绝原因');
+                    return;
+                }
+            } else {
+                status = 'pending';
+            }
+            fetch(`/api/admin/application/${id}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status, comment })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('操作成功');
+                    loadApplications();
+                } else {
+                    alert(data.error || '操作失败');
+                }
+            });
+        }
+
+        // 显示审核状态弹窗
+        function showJobAuditModal(jobId, currentStatus, currentComment) {
+            const modalHtml = `
+                <div class="modal fade" id="jobAuditModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header"><h5 class="modal-title">修改岗位审核状态</h5></div>
+                            <div class="modal-body">
+                                <label class="form-label">审核状态</label>
+                                <select class="form-select" id="jobAuditStatus">
+                                    <option value="approved" ${currentStatus==='approved'?'selected':''}>已通过</option>
+                                    <option value="pending" ${currentStatus==='pending'?'selected':''}>待审核</option>
+                                    <option value="rejected" ${currentStatus==='rejected'?'selected':''}>已拒绝</option>
+                                </select>
+                                <label class="form-label mt-2">备注</label>
+                                <textarea class="form-control" id="jobAuditComment" rows="2">${currentComment||''}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button class="btn btn-primary" id="saveJobAuditBtn">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('jobAuditModal'));
+            modal.show();
+            document.getElementById('saveJobAuditBtn').onclick = function() {
+                const status = document.getElementById('jobAuditStatus').value;
+                const comment = document.getElementById('jobAuditComment').value;
+                fetch(`/api/admin/job/${jobId}/audit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, comment })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('操作成功');
+                        modal.hide();
+                        loadJobs();
+                    } else {
+                        alert(data.error || '操作失败');
+                    }
+                });
+            };
+            document.getElementById('jobAuditModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+        // 显示投递状态弹窗
+        function showAppStatusModal(appId, currentStatus, currentComment) {
+            const modalHtml = `
+                <div class="modal fade" id="appStatusModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header"><h5 class="modal-title">修改投递状态</h5></div>
+                            <div class="modal-body">
+                                <label class="form-label">投递状态</label>
+                                <select class="form-select" id="appStatus">
+                                    <option value="accepted" ${currentStatus==='accepted'?'selected':''}>已通过</option>
+                                    <option value="pending" ${currentStatus==='pending'?'selected':''}>待审核</option>
+                                    <option value="rejected" ${currentStatus==='rejected'?'selected':''}>已拒绝</option>
+                                </select>
+                                <label class="form-label mt-2">备注</label>
+                                <textarea class="form-control" id="appStatusComment" rows="2">${currentComment||''}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button class="btn btn-primary" id="saveAppStatusBtn">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('appStatusModal'));
+            modal.show();
+            document.getElementById('saveAppStatusBtn').onclick = function() {
+                const status = document.getElementById('appStatus').value;
+                const comment = document.getElementById('appStatusComment').value;
+                fetch(`/api/admin/application/${appId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, comment })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('操作成功');
+                        modal.hide();
+                        loadApplications();
+                    } else {
+                        alert(data.error || '操作失败');
+                    }
+                });
+            };
+            document.getElementById('appStatusModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            window.location.href = '/api/logout';
+        });
+
+        function deleteUser(userId) {
+            if (confirm('确定要删除这个用户吗？')) {
+                fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功');
+                        loadUsers();
+                    } else {
+                        alert(data.error || '删除失败');
+                    }
+                })
+                .catch(() => alert('删除失败'));
+            }
+        }
+    </script>
+</body>
+</html>

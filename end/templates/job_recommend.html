@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历上传与解析</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+        .parsed-section {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .parsed-content {
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h4 mb-0">简历解析系统</h1>
+            <div>
+                <a href="/jobseeker_home" class="btn btn-outline-secondary me-2" onclick="event.preventDefault();window.history.back();">返回</a>
+                <button id="logoutBtn" class="btn btn-outline-danger">退出登录</button>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">上传简历</h2>
+                
+                <div class="upload-area mb-3" id="uploadArea">
+                    <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                    <p class="mt-2 mb-1">点击或拖拽文件到此处上传</p>
+                    <p class="small text-muted">支持PDF、DOCX格式，最大16MB</p>
+                    <input type="file" id="resumeFile" class="d-none" accept=".pdf,.docx">
+                </div>
+                
+                <div id="uploadResult" class="alert alert-success mt-3 d-none">
+                    <i class="bi bi-check-circle"></i> 文件上传成功！
+                </div>
+                
+                <div id="uploadError" class="alert alert-danger mt-3 d-none">
+                    <i class="bi bi-exclamation-triangle"></i> <span id="errorMessage"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">简历解析结果</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <button class="btn btn-primary" id="parseBtn" disabled>
+                            <i class="bi bi-file-earmark-text"></i> 开始解析
+                        </button>
+                    </div>
+                </div>
+                <div id="parseResult" class="d-none">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 正在解析简历，请稍候...
+                    </div>
+                </div>
+                <div id="parseError" class="d-none">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> <span id="errorMessage"></span>
+                    </div>
+                </div>
+                <div id="parseSuccess" class="d-none">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i> 简历解析成功！
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="useBertSwitch">
+                            <label class="form-check-label" for="useBertSwitch">使用BERT模型辅助解析</label>
+                        </div>
+                        <small class="text-muted">如果当前解析效果不理想，可以尝试使用BERT模型重新解析</small>
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-success" id="uploadToDbBtn">
+                            <i class="bi bi-cloud-upload"></i> 上传到人才信息库
+                        </button>
+                        <button class="btn btn-primary ms-2" id="recommendJobsBtn">
+                            <i class="bi bi-search"></i> 获取岗位推荐
+                        </button>
+                    </div>
+                    <div class="accordion" id="parseAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#basicInfoCollapse">
+                                    基本信息
+                                </button>
+                            </h2>
+                            <div id="basicInfoCollapse" class="accordion-collapse collapse show" data-bs-parent="#parseAccordion">
+                                <div class="accordion-body" id="basicInfoContent">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#educationCollapse">
+                                    教育背景
+                                </button>
+                            </h2>
+                            <div id="educationCollapse" class="accordion-collapse collapse" data-bs-parent="#parseAccordion">
+                                <div class="accordion-body" id="educationContent">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#workExperienceCollapse">
+                                    工作/项目经历
+                                </button>
+                            </h2>
+                            <div id="workExperienceCollapse" class="accordion-collapse collapse" data-bs-parent="#parseAccordion">
+                                <div class="accordion-body" id="workExperienceContent">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#skillsCollapse">
+                                    个人能力
+                                </button>
+                            </h2>
+                            <div id="skillsCollapse" class="accordion-collapse collapse" data-bs-parent="#parseAccordion">
+                                <div class="accordion-body" id="skillsContent">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#otherInfoCollapse">
+                                    其他信息
+                                </button>
+                            </h2>
+                            <div id="otherInfoCollapse" class="accordion-collapse collapse" data-bs-parent="#parseAccordion">
+                                <div class="accordion-body" id="otherInfoContent">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/plugins/bootstrap5.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 退出登录按钮点击事件
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                fetch('/api/logout')
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/';  // 重定向到登录页
+                    } else {
+                        alert('退出失败，请重试');
+                    }
+                })
+                .catch(error => {
+                    console.error('退出失败:', error);
+                    alert('退出失败，请重试');
+                });
+            });
+
+            const fileInput = document.getElementById('resumeFile');
+            const uploadArea = document.getElementById('uploadArea');
+            const parseBtn = document.getElementById('parseBtn');
+            const uploadResult = document.getElementById('uploadResult');
+            const uploadError = document.getElementById('uploadError');
+            const errorMessage = document.getElementById('errorMessage');
+            const parseResult = document.getElementById('parseResult');
+            const parseError = document.getElementById('parseError');
+            const parseSuccess = document.getElementById('parseSuccess');
+            
+            let uploadedFileName = '';
+            let parseData = null;
+            let lastUploadedResume = '';
+            
+            // 文件上传区域点击事件
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // 文件选择事件
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    
+                    // 检查文件类型
+                    if (!file.name.match(/\.(pdf|docx)$/i)) {
+                        uploadError.classList.remove('d-none');
+                        errorMessage.textContent = '只支持PDF和DOCX格式的文件';
+                        return;
+                    }
+                    
+                    // 检查文件大小（16MB限制）
+                    if (file.size > 16 * 1024 * 1024) {
+                        uploadError.classList.remove('d-none');
+                        errorMessage.textContent = '文件大小不能超过16MB';
+                        return;
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    uploadResult.classList.remove('d-none');
+                    uploadError.classList.add('d-none');
+                    parseBtn.disabled = false;
+                    
+                    fetch('/api/jobseeker/upload', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('生成的 data 对象:', data);
+                        if (data.success) {
+                            uploadedFileName = data.filename;
+                            lastUploadedResume = data.filename;
+                            uploadResult.classList.remove('d-none');
+                            uploadError.classList.add('d-none');
+                            parseBtn.disabled = false;
+                        } else {
+                            uploadError.classList.remove('d-none');
+                            errorMessage.textContent = data.error || '上传失败';
+                        }
+                    })
+                    .catch(error => {
+                        uploadError.classList.remove('d-none');
+                        errorMessage.textContent = '上传失败: ' + error.message;
+                    });
+                }
+            });
+            
+            // BERT解析开关处理
+            document.getElementById('useBertSwitch').addEventListener('change', function(e) {
+                if (e.target.checked) {
+                    parseBtn.disabled = false;
+                    parseBtn.innerHTML = '<i class="bi bi-robot"></i> 使用BERT模型解析';
+                } else {
+                    parseBtn.disabled = false;
+                    parseBtn.innerHTML = '<i class="bi bi-file-earmark-text"></i> 开始解析';
+                }
+            });
+            
+            // 解析简历处理
+            parseBtn.addEventListener('click', function() {
+                if (!uploadedFileName) {
+                    alert('请先上传简历');
+                    return;
+                }
+                
+                const useBert = document.getElementById('useBertSwitch').checked;
+                const apiEndpoint = useBert ? '/api/jobseeker/bert_parse' : '/api/jobseeker/parse';
+                
+                // 显示加载状态
+                parseResult.classList.remove('d-none');
+                parseError.classList.add('d-none');
+                parseSuccess.classList.add('d-none');
+                parseBtn.disabled = true;
+                parseBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 解析中...';
+                
+                // 发送解析请求
+                fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: uploadedFileName
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        parseData = data.data;
+                        console.log('解析结果:', parseData);
+                        displayParseResults(parseData);
+                        parseSuccess.classList.remove('d-none');
+                        parseResult.classList.add('d-none');
+                    } else {
+                        parseError.classList.remove('d-none');
+                        errorMessage.textContent = data.error || '解析失败';
+                    }
+                })
+                .catch(error => {
+                    parseError.classList.remove('d-none');
+                    errorMessage.textContent = '解析失败: ' + error.message;
+                })
+                .finally(() => {
+                    parseBtn.disabled = false;
+                    parseBtn.innerHTML = useBert ? 
+                        '<i class="bi bi-robot"></i> 使用BERT模型解析' : 
+                        '<i class="bi bi-file-earmark-text"></i> 开始解析';
+                });
+            });
+            
+            // 上传到人才信息库
+            document.getElementById('uploadToDbBtn').addEventListener('click', function() {
+                if (!parseData) {
+                    alert('请先解析简历');
+                    return;
+                }
+                
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 上传中...';
+                
+                fetch('/api/jobseeker/upload_to_db', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: parseData
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('成功上传到人才信息库！');
+                    } else {
+                        alert('上传失败: ' + (data.error || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    alert('上传失败: ' + error.message);
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-cloud-upload"></i> 上传到人才信息库';
+                });
+            });
+            
+            // 显示解析结果
+            function displayParseResults(data) {
+                const existingRecommendations = document.querySelector('#recommendationsContainer');
+                if (existingRecommendations) {
+                    existingRecommendations.remove();
+                }
+                let sections = {};
+                
+                if (data.blocks) {
+                    // 处理blocks数组格式
+                    data.blocks.forEach(block => {
+                        sections[block.category] = block.content;
+                    });
+                } else if (data.sections) {
+                    // 处理sections对象格式
+                    sections = data.sections;
+                } else if (data.text) {
+                    // 如果是原始文本，尝试解析
+                    sections = {
+                        '基本信息': data.text,
+                        '教育背景': '无',
+                        '工作/项目经历': '无',
+                        '个人能力': '无',
+                        '其他信息': '无'
+                    };
+                }
+                
+                console.log('处理后的sections:', sections);
+                
+                // 更新各个部分的内容
+                document.getElementById('basicInfoContent').innerHTML = formatContent(sections['基本信息']);
+                document.getElementById('educationContent').innerHTML = formatContent(sections['教育背景']);
+                document.getElementById('workExperienceContent').innerHTML = formatContent(sections['工作/项目经历']);
+                document.getElementById('skillsContent').innerHTML = formatContent(sections['个人能力']);
+                document.getElementById('otherInfoContent').innerHTML = formatContent(sections['其他信息']);
+
+                // 控制手风琴的展开状态
+                const accordionItems = document.querySelectorAll('.accordion-collapse');
+                accordionItems.forEach(item => {
+                    item.classList.remove('show');
+                    const button = item.previousElementSibling.querySelector('.accordion-button');
+                    button.classList.add('collapsed');
+                });
+
+                // 展开基本信息块
+                const basicInfoCollapse = document.getElementById('basicInfoCollapse');
+                const basicInfoButton = basicInfoCollapse.previousElementSibling.querySelector('.accordion-button');
+                basicInfoCollapse.classList.add('show');
+                basicInfoButton.classList.remove('collapsed');
+            }
+
+            // 格式化内容显示
+            function formatContent(content) {
+                if (!content) return '无';
+                // 将换行符转换为HTML换行
+                return content.replace(/\n/g, '<br>');
+            }
+
+            // 添加岗位推荐函数
+            // 在jobseeker_upload.html中
+            function recommendJobs(parseData) {
+                console.log('开始获取岗位推荐...');
+                console.log('简历数据:', parseData);
+                
+                return fetch('/api/jobseeker/recommend_jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        resume_data: parseData
+                    })
+                })
+                .then(response => {
+                    console.log('收到响应:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('解析响应数据:', data);
+                    if (data.success) {
+                        displayRecommendations(data.data);
+                    } else {
+                        console.error('推荐失败:', data.error);
+                        alert('获取推荐失败: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('推荐请求失败:', error);
+                    alert('获取推荐失败: ' + error.message);
+                });
+            }
+
+            // 显示推荐结果（支持tab切换）
+            function displayRecommendations(data) {
+                const existingRecommendations = document.querySelector('#recommendationsContainer');
+                if (existingRecommendations) {
+                    existingRecommendations.remove();
+                }
+                const container = document.createElement('div');
+                container.id = 'recommendationsContainer';
+                container.className = 'mt-4';
+                container.innerHTML = `
+                    <h5 class="mb-3">推荐岗位</h5>
+                    <ul class="nav nav-tabs mb-3" id="recommendTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="jaccard-tab" data-bs-toggle="tab" data-bs-target="#jaccard" type="button" role="tab">Jaccard推荐</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="match-tab" data-bs-toggle="tab" data-bs-target="#match" type="button" role="tab">语义推荐</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="recommendTabContent">
+                        <div class="tab-pane fade show active" id="jaccard" role="tabpanel">
+                            <div id="jaccardRecommendations"></div>
+                        </div>
+                        <div class="tab-pane fade" id="match" role="tabpanel">
+                            <div id="matchRecommendations"></div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('parseSuccess').appendChild(container);
+                renderJobRecommendations(data.jaccard_recommendations, 'jaccardRecommendations', true);
+                renderJobRecommendations(data.recommendations, 'matchRecommendations', false);
+            }
+            // 新增：渲染岗位推荐列表，支持Jaccard模式
+            function renderJobRecommendations(jobs, containerId, isJaccard = false) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                if (!Array.isArray(jobs) || jobs.length === 0) {
+                    container.innerHTML = '<div class="alert alert-info">未找到相关岗位</div>';
+                    return;
+                }
+                const recommendationsList = document.createElement('div');
+                recommendationsList.className = 'list-group mb-3';
+                jobs.forEach(job => {
+                    // 匹配度应为分数*100后再加百分号
+                    const matchRate = job.score !== undefined ? (parseFloat(job.score) * 100).toFixed(2) + '%' : (job.matchRate ? (parseFloat(job.matchRate) * 100).toFixed(2) + '%' : '0.00%');
+                    const jobCard = document.createElement('div');
+                    jobCard.className = 'list-group-item';
+                    jobCard.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-1">${job.title}</h6>
+                            <span class="badge bg-success">匹配度: ${matchRate}</span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            ${(job.details || []).map(detail =>
+                                `${detail.模块}: ${(parseFloat(detail.相似度) * 100).toFixed(2)}%`
+                            ).join(' | ')}
+                        </div>
+                        <div class="mt-2 d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-primary view-job-btn" data-job-id="${job._id}" data-match-rate="${matchRate}">查看详情</button>
+                        </div>
+                    `;
+                    // 查看详情事件
+                    const viewBtn = jobCard.querySelector('.view-job-btn');
+                    viewBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const jobId = this.getAttribute('data-job-id');
+                        const matchRate = this.getAttribute('data-match-rate');
+                        viewJobDetail(jobId, matchRate);
+                    });
+                    recommendationsList.appendChild(jobCard);
+                });
+                container.appendChild(recommendationsList);
+                // 整体评分按钮容器
+                const feedbackBtnContainer = document.createElement('div');
+                feedbackBtnContainer.className = 'd-flex justify-content-end mt-3';
+                const feedbackBtn = document.createElement('button');
+                feedbackBtn.className = 'btn btn-success';
+                feedbackBtn.innerHTML = `<i class="bi bi-star"></i> 对本次${isJaccard ? 'Jaccard推荐' : '岗位推荐'}整体评分与反馈`;
+                feedbackBtn.onclick = function() {
+                    const ids = jobs.map(j => j._id);
+                    showFeedbackModal(ids, isJaccard ? 'job_recommend_jaccard' : 'job_recommend');
+                };
+                feedbackBtnContainer.appendChild(feedbackBtn);
+                container.appendChild(feedbackBtnContainer);
+            }
+            
+            // 查看岗位详情
+            function viewJobDetail(jobId, matchRate) {
+                console.log('查看岗位详情:', jobId, '匹配度:', matchRate);
+                
+                // 获取岗位详情
+                fetch(`/api/jobseeker/job/${jobId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            const job = data.job;
+                            
+                            // 创建模态框
+                            const modalHtml = `
+                                <div class="modal fade" id="jobDetailModal" tabindex="-1" aria-labelledby="jobDetailModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="jobDetailModalLabel">${job.title}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <span class="badge bg-success">匹配度: ${matchRate}</span>
+                                                    <span class="text-muted ms-2">发布者: ${job.recruiter_name}</span>
+                                                    <span class="text-muted ms-2">发布时间: ${job.created_at}</span>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <h6>职位描述</h6>
+                                                    <div class="p-3 bg-light rounded">${job.description.replace(/\n/g, '<br>')}</div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <h6>职位要求</h6>
+                                                    <div class="p-3 bg-light rounded">${job.requirements.replace(/\n/g, '<br>')}</div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                                <button type="button" class="btn btn-primary apply-from-modal" data-job-id="${job._id}">${job.has_applied ? '再次投递' : '投递简历'}</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // 移除可能存在的旧模态框
+                            const oldModal = document.getElementById('jobDetailModal');
+                            if (oldModal) {
+                                oldModal.remove();
+                            }
+                            
+                            // 添加新模态框到DOM
+                            document.body.insertAdjacentHTML('beforeend', modalHtml);
+                            
+                            // 显示模态框
+                            const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
+                            modal.show();
+                            
+                            // 为模态框中的投递按钮添加事件监听器
+                            const applyFromModalBtn = document.querySelector('.apply-from-modal');
+                            if (applyFromModalBtn) {
+                                applyFromModalBtn.addEventListener('click', function() {
+                                    const jobId = this.getAttribute('data-job-id');
+                                    applyJob(jobId);
+                                });
+                            }
+                        } else {
+                            alert('获取岗位详情失败: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('获取岗位详情失败:', error);
+                        alert('获取岗位详情失败: ' + error.message);
+                    });
+            }
+            
+            // 投递简历
+            function applyJob(jobId) {
+                // 创建模态框
+                const modalHtml = `
+                    <div class="modal fade" id="applyJobModal" tabindex="-1" aria-labelledby="applyJobModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="applyJobModalLabel">投递简历</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="applyJobContent">
+                                    <form id="applyForm">
+                                        <input type="hidden" id="applyJobId" value="${jobId}">
+                                        <div class="mb-3">
+                                            <label class="form-label">简历文件</label>
+                                            <input type="text" class="form-control" id="resumeFileName" value="${lastUploadedResume}" readonly>
+                                            <div class="form-text">系统将自动使用最近上传的简历</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="applyNote" class="form-label">申请说明（选填）</label>
+                                            <textarea class="form-control" id="applyNote" rows="3" placeholder="可以添加一些自我介绍或申请说明"></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                            <button type="submit" class="btn btn-primary">提交申请</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除可能存在的旧模态框
+                const oldModal = document.getElementById('applyJobModal');
+                if (oldModal) {
+                    oldModal.remove();
+                }
+                
+                // 添加新模态框到DOM
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('applyJobModal'));
+                modal.show();
+                
+                // 处理表单提交
+                document.getElementById('applyForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const jobId = document.getElementById('applyJobId').value;
+                    const note = document.getElementById('applyNote').value;
+                    if (!lastUploadedResume) {
+                        alert('请先上传简历');
+                        return;
+                    }
+                    const formData = new FormData();
+                    formData.append('jobId', jobId);
+                    formData.append('resumeFileName', lastUploadedResume);
+                    formData.append('note', note);
+                    
+                    // 禁用提交按钮
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 提交中...';
+                    
+                    // 发送请求
+                    console.log('开始发送请求到/api/jobseeker/apply');
+                    fetch('/api/jobseeker/apply', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        console.log('投递响应状态:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('投递响应数据:', data);
+                        if (data.success) {
+                            // 关闭模态框
+                            modal.hide();
+                            
+                            // 显示成功消息
+                            alert('简历投递成功！');
+                            
+                            // 更新UI，标记为已申请
+                            // 注意：由于已移除投递按钮，此处代码保留但不会执行
+                            const applyBtns = document.querySelectorAll(`button[onclick="applyJob('${jobId}')"]`);
+                            if (applyBtns.length > 0) {
+                                applyBtns.forEach(btn => {
+                                    const parent = btn.parentElement;
+                                    btn.remove();
+                                    parent.innerHTML += '<span class="text-success"><i class="bi bi-check-circle"></i> 已投递</span>';
+                                });
+                            }
+                        } else {
+                            alert('投递失败: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('投递请求失败:', error);
+                        alert('投递失败: ' + error.message);
+                    })
+                    .finally(() => {
+                        // 恢复提交按钮
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '提交申请';
+                    });
+                });
+            }
+
+            // 推荐按钮点击事件
+            document.getElementById('recommendJobsBtn').addEventListener('click', function() {
+                if (!parseData) {
+                    alert('请先解析简历');
+                    return;
+                }
+                
+                const button = this;
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 获取推荐中...';
+                
+                recommendJobs(parseData)
+                    .finally(() => {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-search"></i> 获取岗位推荐';
+                    });
+            });
+
+            // 评分弹窗函数（整体）
+            function showFeedbackModal(recommendList, scene) {
+                if (window.localStorage.getItem('feedback_' + scene + '_' + recommendList.join(','))) {
+                    alert('您已评价过本次推荐');
+                    return;
+                }
+                const modalId = 'feedbackModal';
+                const oldModal = document.getElementById(modalId);
+                if (oldModal) oldModal.remove();
+                const modalHtml = `
+                    <div class="modal fade" id="${modalId}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">整体评分与反馈</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="feedbackForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">评分（1-5分）</label>
+                                            <select class="form-select" id="feedbackScore" required>
+                                                <option value="">请选择</option>
+                                                <option value="1">1分</option>
+                                                <option value="2">2分</option>
+                                                <option value="3">3分</option>
+                                                <option value="4">4分</option>
+                                                <option value="5">5分</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">备注（选填）</label>
+                                            <textarea class="form-control" id="feedbackComment" rows="3" placeholder="请填写您的建议或意见"></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                            <button type="submit" class="btn btn-primary">提交</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = new bootstrap.Modal(document.getElementById(modalId));
+                modal.show();
+                document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const score = document.getElementById('feedbackScore').value;
+                    const comment = document.getElementById('feedbackComment').value;
+                    if (!score) {
+                        alert('请选择评分');
+                        return;
+                    }
+                    fetch('/api/feedback/recommend', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            recommend_list: recommendList,
+                            score: score,
+                            comment: comment,
+                            scene: scene
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.localStorage.setItem('feedback_' + scene + '_' + recommendList.join(','), '1');
+                            alert('感谢您的反馈！');
+                            modal.hide();
+                        } else {
+                            alert(data.error || '提交失败');
+                        }
+                    })
+                    .catch(() => alert('提交失败'));
+                });
+            }
+        });
+    </script>
+</body>
+</html>

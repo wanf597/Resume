@@ -1,0 +1,39 @@
+Epoch 1/3
+Train Loss: 0.0410
+              precision    recall  f1-score   support
+
+         LOC       0.96      0.94      0.95      2850
+         ORG       0.80      0.93      0.86      1302
+         PER       0.95      0.96      0.96      1401
+
+   micro avg       0.91      0.94      0.93      5553
+   macro avg       0.90      0.94      0.92      5553
+weighted avg       0.92      0.94      0.93      5553
+
+
+Epoch 2/3
+Train Loss: 0.0144
+              precision    recall  f1-score   support
+
+         LOC       0.96      0.95      0.95      2850
+         ORG       0.87      0.92      0.90      1302
+         PER       0.95      0.97      0.96      1401
+
+   micro avg       0.93      0.95      0.94      5553
+   macro avg       0.93      0.95      0.94      5553
+weighted avg       0.93      0.95      0.94      5553
+
+
+Epoch 3/3
+Train Loss: 0.0089
+              precision    recall  f1-score   support
+
+         LOC       0.95      0.96      0.95      2850
+         ORG       0.88      0.93      0.90      1302
+         PER       0.96      0.97      0.97      1401
+
+   micro avg       0.93      0.95      0.94      5553
+   macro avg       0.93      0.95      0.94      5553
+weighted avg       0.93      0.95      0.94      5553
+
+

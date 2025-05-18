@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>求职者主页</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .job-card {
+            transition: all 0.3s;
+            border-left: 4px solid #0d6efd;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .badge {
+            font-weight: 500;
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h4 mb-0">求职者主页</h1>
+            <div>
+                <a href="/jobseeker_profile" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-person"></i> 个人中心
+                </a>
+                <a href="/api/jobseeker/recommend" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-upload"></i> 岗位推荐
+                </a>
+                <button id="logoutBtn" class="btn btn-outline-danger">
+                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                </button>
+            </div>
+        </div>
+
+        <!-- 筛选部分 -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">岗位类型</label>
+                    <select class="form-select" id="jobTypeFilter">
+                        <option value="">全部</option>
+                        <option value="技术">技术</option>
+                        <option value="产品">产品</option>
+                        <option value="设计">设计</option>
+                        <option value="运营">运营</option>
+                        <option value="市场">市场</option>
+                        <option value="销售">销售</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">工作地点</label>
+                    <select class="form-select" id="locationFilter">
+                        <option value="">全部</option>
+                        <option value="北京">北京</option>
+                        <option value="上海">上海</option>
+                        <option value="广州">广州</option>
+                        <option value="深圳">深圳</option>
+                        <option value="杭州">杭州</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">经验要求</label>
+                    <select class="form-select" id="experienceFilter">
+                        <option value="">全部</option>
+                        <option value="应届生">应届生</option>
+                        <option value="1-3年">1-3年</option>
+                        <option value="3-5年">3-5年</option>
+                        <option value="5-10年">5-10年</option>
+                        <option value="10年以上">10年以上</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">薪资范围</label>
+                    <select class="form-select" id="salaryFilter">
+                        <option value="">全部</option>
+                        <option value="5k-10k">5k-10k</option>
+                        <option value="10k-20k">10k-20k</option>
+                        <option value="20k-30k">20k-30k</option>
+                        <option value="30k-50k">30k-50k</option>
+                        <option value="50k以上">50k以上</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="搜索职位名称、公司名称或关键词">
+                        <button class="btn btn-primary" id="searchBtn">搜索</button>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn">重置筛选</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 岗位列表 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">现有岗位</h5>
+            </div>
+            <div class="card-body">
+                <div id="jobList">
+                    <!-- 岗位卡片将通过JavaScript动态加载 -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载岗位信息...</p>
+                    </div>
+                </div>
+                
+                <!-- 分页 -->
+                <nav aria-label="岗位列表分页">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- 分页将通过JavaScript动态加载 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- 岗位详情模态框 -->
+    <div class="modal fade" id="jobDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">岗位详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="jobDetailContent">
+                    <!-- 岗位详情内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 申请职位模态框 -->
+    <div class="modal fade" id="applyJobModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">申请职位</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="applyJobContent">
+                    <!-- 申请职位内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/plugins/bootstrap5.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 添加调试函数
+        function debugJob(job) {
+            console.log('岗位数据:', {
+                id: job.id,
+                _id: job._id,
+                title: job.title,
+                全部数据: job
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 退出登录按钮点击事件
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                fetch('/api/logout')
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/';  // 重定向到登录页
+                    } else {
+                        alert('退出失败，请重试');
+                    }
+                })
+                .catch(error => {
+                    console.error('退出失败:', error);
+                    alert('退出失败，请重试');
+                });
+            });
+            
+            // 存储所有岗位数据
+            let allJobs = [];
+            
+            // 加载岗位列表
+            function loadJobs() {
+                const jobList = document.getElementById('jobList');
+                const searchInput = document.getElementById('searchInput').value;
+                
+                jobList.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载岗位信息...</p>
+                    </div>
+                `;
+                
+                // 发送请求获取岗位数据
+                fetch('/api/jobseeker/jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        keyword: searchInput,
+                        page: 1
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            window.location.href = '/';  // 未登录时重定向到登录页
+                            throw new Error('请先登录');
+                        }
+                        throw new Error('获取岗位数据失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // 更新全局岗位数据
+                        allJobs = data.jobs;
+                        displayJobs(data.jobs);
+                        
+                        // 更新分页
+                        updatePagination(data.currentPage, data.totalPages);
+                    } else {
+                        jobList.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i> ${data.error || '获取岗位数据失败'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('加载岗位失败:', error);
+                    jobList.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> 加载岗位失败: ${error.message}
+                        </div>
+                    `;
+                });
+            }
+            
+            // 显示岗位列表
+            function displayJobs(jobs) {
+                const jobList = document.getElementById('jobList');
+                console.log('收到的所有岗位数据:', jobs);
+                if (!jobs || jobs.length === 0) {
+                    jobList.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 没有找到符合条件的岗位
+                        </div>
+                    `;
+                    return;
+                }
+                let html = '';
+                jobs.forEach(job => {
+                    html += `
+                        <div class="job-card card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1">${job.title}</h5>
+                                        <p class="text-muted small mb-2">发布时间: ${job.created_at || '未知'}</p>
+                                        <p class="text-muted small mb-2">发布者: ${job.recruiter_name || '未知'}</p>
+                                    </div>
+                                    ${job.has_applied ? '<span class="badge bg-success">已投递</span>' : ''}
+                                </div>
+                                <p class="card-text small">${job.description ? job.description.substring(0, 150) + '...' : '暂无描述'}</p>
+                                <div class="d-flex justify-content-end align-items-center mt-3">
+                                    <button class="btn btn-sm btn-outline-primary me-2 view-detail-btn" data-jobid="${job._id}">查看详情</button>
+                                    ${!job.has_applied ? `<button class="btn btn-sm btn-primary apply-job-btn" data-jobid="${job._id}">投递简历</button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                jobList.innerHTML = html;
+                // 绑定事件
+                jobList.querySelectorAll('.view-detail-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        window.viewJobDetail(this.getAttribute('data-jobid'));
+                    });
+                });
+                jobList.querySelectorAll('.apply-job-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        window.applyJob(this.getAttribute('data-jobid'));
+                    });
+                });
+            }
+            
+            // 更新分页
+            function updatePagination(currentPage, totalPages) {
+                const pagination = document.getElementById('pagination');
+                if (totalPages <= 1) {
+                    pagination.innerHTML = '';
+                    return;
+                }
+                
+                let html = '';
+                // 上一页
+                html += `
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${currentPage - 1}">上一页</a>
+                    </li>
+                `;
+                
+                // 页码
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        html += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>
+                        `;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) {
+                        html += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                    }
+                }
+                
+                // 下一页
+                html += `
+                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${currentPage + 1}">下一页</a>
+                    </li>
+                `;
+                
+                pagination.innerHTML = html;
+                
+                // 添加页码点击事件
+                pagination.querySelectorAll('.page-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const page = parseInt(this.dataset.page);
+                        if (!isNaN(page) && page > 0) {
+                            loadJobsPage(page);
+                        }
+                    });
+                });
+            }
+            
+            // 加载指定页的岗位
+            function loadJobsPage(page) {
+                const searchInput = document.getElementById('searchInput').value;
+                
+                fetch('/api/jobseeker/jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        keyword: searchInput,
+                        page: page
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allJobs = data.jobs;
+                        displayJobs(data.jobs);
+                        updatePagination(data.currentPage, data.totalPages);
+                        // 滚动到顶部
+                        window.scrollTo(0, 0);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载岗位失败:', error);
+                });
+            }
+            
+            // 查看岗位详情
+            window.viewJobDetail = function(jobId) {
+                const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
+                const content = document.getElementById('jobDetailContent');
+                
+                content.innerHTML = `
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载岗位详情...</p>
+                    </div>
+                `;
+                
+                modal.show();
+                
+                // 从服务器获取最新的岗位详情
+                fetch(`/api/jobseeker/job/${jobId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            window.location.href = '/';  // 未登录时重定向到登录页
+                            throw new Error('请先登录');
+                        }
+                        throw new Error('获取岗位详情失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const job = data.job;
+                        content.innerHTML = `
+                            <div class="mb-4">
+                                <h4>${job.title}</h4>
+                                <p class="text-muted">发布时间: ${job.created_at || '未知'}</p>
+                                <p class="text-muted">发布者: ${job.recruiter_name || '未知'}</p>
+                                ${job.has_applied ? '<span class="badge bg-success">已投递</span>' : ''}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>岗位描述</h5>
+                                <p class="text-muted">${job.description ? job.description.replace(/\n/g, '<br>') : '暂无描述'}</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>岗位要求</h5>
+                                <p class="text-muted">${job.requirements ? job.requirements.replace(/\n/g, '<br>') : '暂无要求'}</p>
+                            </div>
+                            
+                            <div class="text-end">
+                                ${!job.has_applied ? `
+                                    <button class="btn btn-primary" onclick="applyJob('${job._id}')">
+                                        投递简历
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    } else {
+                        content.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i> ${data.error || '获取岗位详情失败'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取岗位详情失败:', error);
+                    content.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> ${error.message || '获取岗位详情失败'}
+                        </div>
+                    `;
+                });
+            }
+            
+            // 申请职位
+            window.applyJob = function(jobId) {
+                const modal = new bootstrap.Modal(document.getElementById('applyJobModal'));
+                const content = document.getElementById('applyJobContent');
+                
+                content.innerHTML = `
+                    <form id="applyForm">
+                        <div class="mb-3">
+                            <label for="resumeFile" class="form-label">上传简历</label>
+                            <input type="file" class="form-control" id="resumeFile" accept=".pdf,.doc,.docx" required>
+                            <div class="form-text">支持PDF、DOC、DOCX格式，最大16MB</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="applyNote" class="form-label">申请说明（选填）</label>
+                            <textarea class="form-control" id="applyNote" rows="3" placeholder="可以添加一些自我介绍或申请说明"></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">提交申请</button>
+                        </div>
+                    </form>
+                `;
+                
+                modal.show();
+                
+                // 处理表单提交
+                document.getElementById('applyForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const resumeFile = document.getElementById('resumeFile').files[0];
+                    const note = document.getElementById('applyNote').value;
+                    
+                    if (!resumeFile) {
+                        alert('请选择要上传的简历');
+                        return;
+                    }
+                    
+                    // 检查文件大小
+                    if (resumeFile.size > 16 * 1024 * 1024) {
+                        alert('文件大小不能超过16MB');
+                        return;
+                    }
+                    
+                    // 检查文件类型
+                    const allowedTypes = ['.pdf', '.doc', '.docx'];
+                    const fileExt = '.' + resumeFile.name.split('.').pop().toLowerCase();
+                    if (!allowedTypes.includes(fileExt)) {
+                        alert('只支持PDF、DOC、DOCX格式的文件');
+                        return;
+                    }
+                    
+                    const formData = new FormData();
+                    formData.append('jobId', jobId);
+                    formData.append('resume', resumeFile);
+                    formData.append('note', note);
+                    
+                    // 禁用提交按钮
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 提交中...';
+                    
+                    // 发送申请请求
+                    fetch('/api/jobseeker/apply', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 401) {
+                                window.location.href = '/';  // 未登录时重定向到登录页
+                                throw new Error('请先登录');
+                            }
+                            return response.json().then(data => {
+                                throw new Error(data.error || '申请失败');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            alert('申请成功！');
+                            modal.hide();
+                            // 刷新岗位列表
+                            loadJobs();
+                        } else {
+                            alert(data.error || '申请失败，请重试');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('申请失败:', error);
+                        alert(error.message || '申请失败，请重试');
+                    })
+                    .finally(() => {
+                        // 恢复提交按钮
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    });
+                });
+            };
+            
+            // 筛选条件变化时重新加载岗位
+            document.getElementById('jobTypeFilter').addEventListener('change', () => loadJobs());
+            document.getElementById('locationFilter').addEventListener('change', () => loadJobs());
+            document.getElementById('experienceFilter').addEventListener('change', () => loadJobs());
+            document.getElementById('salaryFilter').addEventListener('change', () => loadJobs());
+            
+            // 搜索按钮点击事件
+            document.getElementById('searchBtn').addEventListener('click', () => loadJobs());
+            
+            // 搜索框回车事件
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loadJobs();
+                }
+            });
+            
+            // 重置筛选按钮点击事件
+            document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+                document.getElementById('jobTypeFilter').value = '';
+                document.getElementById('locationFilter').value = '';
+                document.getElementById('experienceFilter').value = '';
+                document.getElementById('salaryFilter').value = '';
+                document.getElementById('searchInput').value = '';
+                loadJobs();
+            });
+            
+            // 初始加载岗位列表
+            loadJobs();
+        });
+    </script>
+</body>
+</html>

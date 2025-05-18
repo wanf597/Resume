@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 求职者</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .profile-section {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .resume-card {
+            transition: all 0.3s;
+        }
+        .resume-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h4 mb-0">个人中心</h1>
+            <div>
+                <a href="/jobseeker_home" class="btn btn-outline-secondary me-2">返回首页</a>
+                <button id="logoutBtn" class="btn btn-outline-danger me-2">退出登录</button>
+                <button id="deleteAccountBtn" class="btn btn-danger">注销账户</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 左侧导航 -->
+            <div class="col-md-3">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="nav flex-column nav-pills" id="profileTabs" role="tablist">
+                            <button class="nav-link active" id="basicInfo-tab" data-bs-toggle="pill" data-bs-target="#basicInfo" type="button" role="tab">
+                                <i class="bi bi-person"></i> 基本信息
+                            </button>
+                            <button class="nav-link" id="subscription-tab" data-bs-toggle="pill" data-bs-target="#subscription" type="button" role="tab">
+                                <i class="bi bi-star"></i> 订阅管理
+                            </button>
+                            <button class="nav-link" id="resumes-tab" data-bs-toggle="pill" data-bs-target="#resumes" type="button" role="tab">
+                                <i class="bi bi-file-earmark-text"></i> 我的简历
+                            </button>
+                            <button class="nav-link" id="applications-tab" data-bs-toggle="pill" data-bs-target="#applications" type="button" role="tab">
+                                <i class="bi bi-send"></i> 投递记录
+                            </button>
+                            <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security" type="button" role="tab">
+                                <i class="bi bi-shield-lock"></i> 账号安全
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="col-md-9">
+                <div class="tab-content" id="profileTabsContent">
+                    <!-- 基本信息 -->
+                    <div class="tab-pane fade show active" id="basicInfo" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">基本信息</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="basicInfoForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">用户名</label>
+                                        <input type="text" class="form-control" id="username" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">邮箱</label>
+                                        <input type="email" class="form-control" id="email" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">手机号</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="phone" placeholder="可绑定手机号">
+                                            <button class="btn btn-outline-primary" type="button" id="savePhoneBtn">保存</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 订阅管理 -->
+                    <div class="tab-pane fade" id="subscription" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">订阅管理</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="subscriptionStatus" class="mb-4">
+                                    <div class="alert alert-info">
+                                        <h6 class="alert-heading mb-2">当前订阅状态</h6>
+                                        <div id="currentSubscriptionInfo">
+                                            <!-- 订阅信息将通过JavaScript动态加载 -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="subscriptionPlans" class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">周卡</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">10元/周</h6>
+                                                <p class="card-text">适合短期使用</p>
+                                                <button class="btn btn-primary subscribe-btn" data-type="week">订阅周卡</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">月卡</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">30元/月</h6>
+                                                <p class="card-text">最受欢迎的选择</p>
+                                                <button class="btn btn-primary subscribe-btn" data-type="month">订阅月卡</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                                <h5 class="card-title">年卡</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">365元/年</h6>
+                                                <p class="card-text">最具性价比</p>
+                                                <button class="btn btn-primary subscribe-btn" data-type="year">订阅年卡</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 我的简历 -->
+                    <div class="tab-pane fade" id="resumes" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">我的简历</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="resumesList" class="row">
+                                    <!-- 简历列表将通过JavaScript动态加载 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 投递记录 -->
+                    <div class="tab-pane fade" id="applications" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">投递记录</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="applicationsList">
+                                    <!-- 投递记录将通过JavaScript动态加载 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 账号安全 -->
+                    <div class="tab-pane fade" id="security" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">账号安全</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="securityForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">当前密码</label>
+                                        <input type="password" class="form-control" id="currentPassword" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">新密码</label>
+                                        <input type="password" class="form-control" id="newPassword" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">确认新密码</label>
+                                        <input type="password" class="form-control" id="confirmPassword" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">修改密码</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/plugins/bootstrap5.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 退出登录
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                fetch('/api/logout')
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = '/';
+                        } else {
+                            alert('退出失败，请重试');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('退出失败:', error);
+                        alert('退出失败，请重试');
+                    });
+            });
+
+            // 加载用户基本信息
+            function loadUserInfo() {
+                fetch('/api/jobseeker/profile')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const user = data.user;
+                            document.getElementById('username').value = user.username;
+                            document.getElementById('email').value = user.email;
+                            document.getElementById('phone').value = user.phone || '';
+                            updateSubscriptionStatus(user);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载用户信息失败:', error);
+                        alert('加载用户信息失败');
+                    });
+            }
+
+            // 更新订阅状态显示
+            function updateSubscriptionStatus(user) {
+                const container = document.getElementById('currentSubscriptionInfo');
+                if (user.is_subscribed && user.subscribe_expire && new Date(user.subscribe_expire) > new Date()) {
+                    const typeMap = {
+                        'year': '年卡',
+                        'month': '月卡',
+                        'week': '周卡'
+                    };
+                    container.innerHTML = `
+                        <p class="mb-1"><strong>订阅类型：</strong>${typeMap[user.subscribe_type] || '未知'}</p>
+                        <p class="mb-1"><strong>到期时间：</strong>${user.subscribe_expire}</p>
+                        <p class="mb-0 text-success">订阅状态：已激活</p>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <p class="mb-0 text-danger">当前未订阅，请选择以下套餐开通服务</p>
+                    `;
+                }
+            }
+
+            // 订阅按钮点击事件
+            document.querySelectorAll('.subscribe-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const type = this.getAttribute('data-type');
+                    if (confirm(`确定要订阅${type === 'year' ? '年卡' : (type === 'month' ? '月卡' : '周卡')}吗？`)) {
+                        this.disabled = true;
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 处理中...';
+
+                        fetch('/api/subscribe', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ type })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('订阅成功！');
+                                loadUserInfo(); // 刷新用户信息
+                            } else {
+                                alert(data.error || '订阅失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('订阅失败:', error);
+                            alert('订阅失败，请重试');
+                        })
+                        .finally(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                        });
+                    }
+                });
+            });
+
+            // 加载简历列表
+            function loadResumes() {
+                fetch('/api/jobseeker/resumes')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const resumesList = document.getElementById('resumesList');
+                            resumesList.innerHTML = '';
+                            data.resumes.forEach(resume => {
+                                const resumeCard = document.createElement('div');
+                                resumeCard.className = 'col-12 mb-3';
+                                resumeCard.innerHTML = `
+                                    <div class="card resume-card w-100">
+                                        <div class="card-body">
+                                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                                                <div>
+                                                    <h6 class="card-title mb-2">${resume.name || '未命名简历'}</h6>
+                                                    <p class="card-text small text-muted mb-1">
+                                                        <b>上传时间:</b> ${resume.created_at}<br>
+                                                        <b>最后更新:</b> ${resume.updated_at}
+                                                    </p>
+                                                </div>
+                                                <div class="mt-3 mt-md-0 d-flex gap-2">
+                                                    <button class="btn btn-outline-primary btn-sm view-parse" data-resume-id="${resume._id}">
+                                                        <i class="bi bi-eye"></i> 简历详情
+                                                    </button>
+                                                    <button class="btn btn-outline-info btn-sm update-resume">
+                                                        <i class="bi bi-arrow-repeat"></i> 更新
+                                                    </button>
+                                                    <button class="btn btn-outline-danger btn-sm delete-resume" data-resume-id="${resume._id}">
+                                                        <i class="bi bi-trash"></i> 删除
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                resumesList.appendChild(resumeCard);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载简历列表失败:', error);
+                        alert('加载简历列表失败');
+                    });
+            }
+
+            // 加载投递记录
+            function loadApplications() {
+                fetch('/api/jobseeker/applications')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const applicationsList = document.getElementById('applicationsList');
+                            applicationsList.innerHTML = '';
+                            
+                            data.applications.forEach(app => {
+                                const appItem = document.createElement('div');
+                                appItem.className = 'card mb-3';
+                                appItem.innerHTML = `
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="card-title mb-0">${app.job_title}</h6>
+                                            <span class="badge ${app.status === 'pending' ? 'bg-warning' : 
+                                                              app.status === 'accepted' ? 'bg-success' : 'bg-danger'}">
+                                                ${app.status === 'pending' ? '待处理' : 
+                                                  app.status === 'accepted' ? '已通过' : '已拒绝'}
+                                            </span>
+                                        </div>
+                                        <p class="card-text small text-muted mt-2">
+                                            投递时间: ${app.created_at}<br>
+                                            公司: ${app.company || '未知'}
+                                        </p>
+                                        ${app.comment ? `<div class='alert alert-info p-2 mb-0'><b>处理备注：</b>${app.comment}</div>` : ''}
+                                    </div>
+                                `;
+                                applicationsList.appendChild(appItem);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载投递记录失败:', error);
+                        alert('加载投递记录失败');
+                    });
+            }
+
+            // 修改密码
+            document.getElementById('securityForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (newPassword !== confirmPassword) {
+                    alert('两次输入的新密码不一致');
+                    return;
+                }
+                
+                fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('密码修改成功');
+                        this.reset();
+                    } else {
+                        alert('密码修改失败: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('修改密码失败:', error);
+                    alert('修改密码失败');
+                });
+            });
+
+            // 删除简历
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-resume')) {
+                    const resumeId = e.target.closest('.delete-resume').dataset.resumeId;
+                    if (confirm('确定要删除这份简历吗？')) {
+                        fetch(`/api/jobseeker/resumes/${resumeId}`, {
+                            method: 'DELETE'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('简历删除成功');
+                                loadResumes();
+                            } else {
+                                alert('简历删除失败: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('删除简历失败:', error);
+                            alert('删除简历失败');
+                        });
+                    }
+                }
+            });
+
+            // 查看简历
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.view-resume')) {
+                    const resumeId = e.target.closest('.view-resume').dataset.resumeId;
+                    window.location.href = `/api/jobseeker/resumes/${resumeId}`;
+                }
+            });
+
+            // 账户注销
+            document.getElementById('deleteAccountBtn').addEventListener('click', function() {
+                if (!confirm('注销账户将删除所有个人数据且无法恢复，确定要继续吗？')) return;
+                fetch('/api/account/delete', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('账户已注销，感谢您的使用！');
+                            window.location.href = '/';
+                        } else {
+                            alert('注销失败: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('注销失败:', error);
+                        alert('注销失败');
+                    });
+            });
+
+            // 绑定手机号保存事件
+            document.getElementById('savePhoneBtn').addEventListener('click', function() {
+                const phone = document.getElementById('phone').value.trim();
+                if (!/^1[3-9]\d{9}$/.test(phone)) {
+                    alert('请输入有效的手机号');
+                    return;
+                }
+                fetch('/api/jobseeker/bind_phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('手机号绑定成功');
+                        loadUserInfo(); // 绑定成功后刷新用户信息
+                    } else {
+                        alert('绑定失败: ' + data.error);
+                    }
+                })
+                .catch(() => alert('绑定失败'));
+            });
+
+            // 查看解析详情事件
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.view-parse')) {
+                    const resumeId = e.target.closest('.view-parse').dataset.resumeId;
+                    fetch(`/api/jobseeker/resume_parse_detail_api/${resumeId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.success) {
+                                alert(data.error || '获取解析内容失败');
+                                return;
+                            }
+                            showParseDetailModal(data);
+                        })
+                        .catch(() => alert('获取解析内容失败'));
+                }
+            });
+
+            // 动态生成并展示解析详情模态框
+            function showParseDetailModal(data) {
+                let html = '';
+                if (data.parse.blocks && Array.isArray(data.parse.blocks)) {
+                    data.parse.blocks.forEach(block => {
+                        html += `<div class='fw-bold mt-3 mb-1'>${block.category}</div><div class='bg-light rounded p-2 mb-2'>${block.content.replace(/\n/g, '<br>')}</div>`;
+                    });
+                } else {
+                    html = `<div class='alert alert-warning'>暂无解析内容</div>`;
+                }
+                // 构造模态框
+                const modalHtml = `
+                    <div class="modal fade" id="parseDetailModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">简历详情</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">${html}</div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                // 移除旧模态框
+                const oldModal = document.getElementById('parseDetailModal');
+                if (oldModal) oldModal.remove();
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = new bootstrap.Modal(document.getElementById('parseDetailModal'));
+                modal.show();
+            }
+
+            // "更新"按钮事件
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.update-resume')) {
+                    window.location.href = '/api/jobseeker/recommend';
+                }
+            });
+
+            // 初始化加载数据
+            loadUserInfo();
+            loadResumes();
+            loadApplications();
+        });
+    </script>
+</body>
+</html> 

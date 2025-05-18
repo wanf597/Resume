@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人脸识别系统</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        .preview-container {
+            position: relative;
+            min-height: 400px;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 600px;
+            display: none;
+            object-fit: contain;
+        }
+        #faceCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h1 class="text-center mb-4">人脸识别系统</h1>
+                        
+                        <div class="mb-4">
+                            <form id="uploadForm" class="text-center" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" id="imageInput" name="image" accept="image/*" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="recognizeBtn" disabled>
+                                    开始识别
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="preview-container mb-4">
+                            <img id="preview" alt="预览图">
+                            <canvas id="faceCanvas"></canvas>
+                        </div>
+
+                        <div id="result" class="alert d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <h5 class="mb-0">识别中...</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/plugins/bootstrap5.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let preview = document.getElementById('preview');
+        let faceCanvas = document.getElementById('faceCanvas');
+        let ctx = faceCanvas.getContext('2d');
+        let loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const recognizeBtn = document.getElementById('recognizeBtn');
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.className = 'alert d-none';
+            clearCanvas();
+            
+            if (!file) {
+                recognizeBtn.disabled = true;
+                return;
+            }
+            
+            // 验证文件大小
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                resultDiv.className = 'alert alert-danger';
+                resultDiv.textContent = '图片大小超过限制 (5MB)';
+                recognizeBtn.disabled = true;
+                preview.style.display = 'none';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                recognizeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (document.getElementById('imageInput').files.length > 0) {
+                recognizeFace();
+            }
+        });
+
+        function updateCanvasSize() {
+            if (!preview || !faceCanvas || !preview.complete || preview.naturalWidth === 0) return;
+            
+            const rect = preview.getBoundingClientRect();
+            faceCanvas.style.width = rect.width + 'px';
+            faceCanvas.style.height = rect.height + 'px';
+            faceCanvas.width = rect.width;
+            faceCanvas.height = rect.height;
+            
+            clearCanvas();
+        }
+
+        function clearCanvas() {
+            if (!faceCanvas || !ctx) return;
+            ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+        }
+
+        function drawFaceBox(face) {
+            if (!preview || !faceCanvas || !ctx || !preview.complete || preview.naturalWidth === 0) return;
+
+            const [top, right, bottom, left] = face.location;
+            const name = face.name;
+            const confidence = face.confidence;
+            const confidenceThreshold = 0.6;
+
+            const previewRect = preview.getBoundingClientRect();
+            const scaleX = previewRect.width / preview.naturalWidth;
+            const scaleY = previewRect.height / preview.naturalHeight;
+
+            const boxLeft = left * scaleX;
+            const boxTop = top * scaleY;
+            const boxWidth = (right - left) * scaleX;
+            const boxHeight = (bottom - top) * scaleY;
+
+            const isUnknown = name === 'unknown' || confidence < confidenceThreshold;
+            const boxColor = isUnknown ? '#dc3545' : '#198754';
+            const textBgColor = isUnknown ? 'rgba(220, 53, 69, 0.9)' : 'rgba(25, 135, 84, 0.9)';
+
+            ctx.strokeStyle = boxColor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boxLeft, boxTop, boxWidth, boxHeight);
+
+            const text = `${name} (${(confidence * 100).toFixed(1)}%)`;
+            ctx.font = 'bold 14px Arial';
+            const textMetrics = ctx.measureText(text);
+            const textWidth = textMetrics.width;
+            const textHeight = 20;
+            const padding = 5;
+
+            ctx.fillStyle = textBgColor;
+            ctx.fillRect(
+                boxLeft, 
+                boxTop - textHeight - padding * 2,
+                textWidth + padding * 2, 
+                textHeight + padding * 2
+            );
+
+            ctx.fillStyle = 'white';
+            ctx.fillText(text, boxLeft + padding, boxTop - padding - 2);
+        }
+
+        function showResult(result) {
+            const resultDiv = document.getElementById('result');
+            clearCanvas();
+            
+            if (!result.success) {
+                resultDiv.className = 'alert alert-danger';
+                resultDiv.textContent = result.message;
+                preview.style.display = 'none';
+                return;
+            }
+
+            if (!result.faces || result.faces.length === 0) {
+                resultDiv.className = 'alert alert-warning';
+                resultDiv.textContent = '未检测到人脸';
+                return;
+            }
+
+            const allUnknown = result.faces.every(face => face.name === 'unknown');
+
+            updateCanvasSize();
+            result.faces.forEach(face => {
+                drawFaceBox(face);
+            });
+
+            if (allUnknown) {
+                resultDiv.className = 'alert alert-info';
+                resultDiv.textContent = '识别到未知人脸';
+            } else {
+                resultDiv.className = 'alert alert-success';
+                resultDiv.textContent = '识别完成';
+            }
+        }
+
+        async function recognizeFace() {
+            const form = document.getElementById('uploadForm');
+            const formData = new FormData(form);
+            const file = formData.get('image');
+            
+            if (!file) {
+                showResult({ success: false, message: '请先选择图片' });
+                return;
+            }
+
+            // 前端文件类型快速检查
+            const fileType = file.type.toLowerCase();
+            if (!fileType.startsWith('image/')) {
+                showResult({ success: false, message: '无效的图像文件格式' });
+                return;
+            }
+
+            console.log('开始识别...');
+            loadingModal.show();
+
+            try {
+                const response = await fetch('/api/recognize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    console.error('JSON解析失败:', e);
+                    throw new Error('服务器响应格式错误');
+                }
+
+                if (!response.ok) {
+                    console.error('服务器错误:', result);
+                    throw new Error(result.message || `HTTP ${response.status}`);
+                }
+
+                console.log('识别成功');
+                showResult(result);
+            } catch (error) {
+                console.error('识别出错:', error);
+                showResult({
+                    success: false,
+                    message: error.message || '识别失败，请稍后重试'
+                });
+            } finally {
+                console.log('结束识别流程');
+                if (loadingModal) {
+                    loadingModal.hide();
+                }
+            }
+        }
+
+        preview.addEventListener('load', updateCanvasSize);
+        window.addEventListener('resize', updateCanvasSize);
+    </script>
+</body>
+</html> 

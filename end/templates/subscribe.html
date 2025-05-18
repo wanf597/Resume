@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>订阅服务</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="card mx-auto" style="max-width:400px;">
+            <div class="card-body text-center">
+                <h3 class="mb-3">订阅会员服务</h3>
+                <p>开通订阅后可享受全部功能</p>
+                <div class="mb-3">
+                    <select id="subType" class="form-select">
+                        <option value="year">年卡（365元/年）</option>
+                        <option value="month" selected>月卡（30元/月）</option>
+                        <option value="week">周卡（10元/周）</option>
+                    </select>
+                </div>
+                <button id="payBtn" class="btn btn-success btn-lg w-100">模拟支付并开通订阅</button>
+                <button id="cancelBtn" class="btn btn-outline-secondary w-100 mt-3">取消并返回</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('payBtn').onclick = function() {
+            this.disabled = true;
+            this.textContent = '支付中...';
+            const type = document.getElementById('subType').value;
+            fetch('/api/subscribe', {
+                method:'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({type})
+            })
+            .then(res=>res.json())
+            .then(data=>{
+                if(data.success){
+                    alert('订阅成功！到期时间：'+data.expire);
+                    window.location.href = '/';
+                }else{
+                    alert(data.error||'订阅失败');
+                }
+            });
+        }
+
+        document.getElementById('cancelBtn').onclick = function() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        };
+    </script>
+</body>
+</html> 

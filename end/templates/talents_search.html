@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岗位管理</title>
+    <link href="/static/plugins/bootstrap5.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="/static/css/main.css" rel="stylesheet">
+    
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h4 mb-0">岗位管理系统</h1>
+            <div>
+                <a href="/recruiter_home" class="btn btn-outline-secondary me-2">返回首页</a>
+                <button id="logoutBtn" class="btn btn-outline-danger">退出登录</button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4 h-100">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3" id="formTitle">新增岗位</h2>
+                        
+                        <form id="jobForm">
+                            <input type="hidden" id="jobId">
+                            <div class="mb-3">
+                                <label for="jobTitle" class="form-label">岗位名称</label>
+                                <input type="text" class="form-control" id="jobTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="jobResponsibilities" class="form-label">岗位职责</label>
+                                <textarea class="form-control" id="jobResponsibilities" rows="4" required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="jobRequirements" class="form-label">任职要求</label>
+                                <textarea class="form-control" id="jobRequirements" rows="4" required></textarea>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary" id="talentSearchBtn">人才检索</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4 h-100">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">匹配人才</h2>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>点击"人才检索"按钮开始匹配人才
+                        </div>
+                        
+                        <div id="searchResults">
+                            <div class="job-card card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <h5 class="card-title mb-1">张三</h5>
+                                        <span class="badge bg-success">匹配度: 85%</span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-2">清华大学 | 计算机科学与技术 | 硕士</p>
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary me-1">Java</span>
+                                        <span class="badge bg-primary me-1">Spring Boot</span>
+                                        <span class="badge bg-primary me-1">MySQL</span>
+                                    </div>
+                                    <p class="card-text small">5年Java开发经验，熟悉微服务架构...</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-sm btn-outline-primary">查看完整简历</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="job-card card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <h5 class="card-title mb-1">李四</h5>
+                                        <span class="badge bg-success">匹配度: 78%</span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-2">北京大学 | 软件工程 | 本科</p>
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary me-1">Python</span>
+                                        <span class="badge bg-primary me-1">Django</span>
+                                        <span class="badge bg-primary me-1">机器学习</span>
+                                    </div>
+                                    <p class="card-text small">3年Python开发经验，参与过多个AI项目...</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-sm btn-outline-primary">查看完整简历</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 获取URL参数
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // 加载岗位数据
+        function loadJobData(jobId) {
+            fetch(`/api/recruiter/job/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const job = data.job;
+                    document.getElementById('jobId').value = job._id;
+                    document.getElementById('jobTitle').value = job.title;
+                    document.getElementById('jobResponsibilities').value = job.description;
+                    document.getElementById('jobRequirements').value = job.requirements;
+                    document.getElementById('formTitle').textContent = '编辑岗位';
+                } else {
+                    alert(data.error || '加载岗位信息失败');
+                    window.location.href = '/recruiter_home';
+                }
+            })
+            .catch(error => {
+                console.error('加载岗位信息失败:', error);
+                alert('加载岗位信息失败');
+                window.location.href = '/recruiter_home';
+            });
+        }
+
+        // 必须放在外部，确保全局可用
+        function viewFullResume(filename) {
+            window.open(`/api/recruiter/view_resume/${filename}`, '_blank');
+        }
+
+        // 页面加载完成后
+        document.addEventListener('DOMContentLoaded', function() {
+            const jobId = getUrlParameter('job_id');
+            if (jobId) {
+                loadJobData(jobId);
+            }
+            
+        // 退出登录按钮点击事件
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            fetch('/api/logout')
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/';  // 重定向到登录页
+                } else {
+                    alert('退出失败，请重试');
+                }
+            })
+            .catch(error => {
+                console.error('退出失败:', error);
+                alert('退出失败，请重试');
+            });
+        });
+        
+        // 人才检索按钮点击事件
+        document.getElementById('talentSearchBtn').addEventListener('click', function() {
+            const jobTitle = document.getElementById('jobTitle').value;
+            const jobResponsibilities = document.getElementById('jobResponsibilities').value;
+            const jobRequirements = document.getElementById('jobRequirements').value;
+            
+            if (!jobTitle || !jobResponsibilities || !jobRequirements) {
+                alert('请先填写完整的岗位信息');
+                return;
+            }
+            
+            // 显示加载状态
+            this.disabled = true;
+            const originalBtnText = this.innerHTML;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 检索中...';
+            
+            // 直接进行人才检索
+            fetch('/api/recruiter/match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: jobTitle,
+                    description: jobResponsibilities,
+                    requirements: jobRequirements
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = '/';  // 未登录时重定向到登录页
+                    throw new Error('请先登录');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                        displayMatchTabs(data.data);
+                } else {
+                    alert(data.error || '检索失败，请重试');
+                }
+            })
+            .catch(error => {
+                console.error('检索失败:', error);
+                if (error.message === '请先登录') {
+                    window.location.href = '/';
+                } else {
+                    alert(error.message || '检索失败，请重试');
+                }
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = originalBtnText;
+            });
+        });
+        
+            // 展示推荐结果tab
+            function displayMatchTabs(data) {
+            const container = document.getElementById('searchResults');
+                container.innerHTML = '';
+                if ((!data.matches || data.matches.length === 0) && (!data.jaccard_matches || data.jaccard_matches.length === 0)) {
+                    container.innerHTML = '<div class="alert alert-info">未找到匹配的人才</div>';
+                    return;
+                }
+                // Tab按钮，Jaccard在前且默认active
+                const tabHtml = `
+                    <ul class="nav nav-tabs mb-3" id="matchTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="jaccard-tab" data-bs-toggle="tab" data-bs-target="#jaccard" type="button" role="tab">Jaccard推荐</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="match-tab" data-bs-toggle="tab" data-bs-target="#match" type="button" role="tab">语义推荐</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="matchTabContent">
+                        <div class="tab-pane fade show active" id="jaccard" role="tabpanel">
+                            <div id="jaccardResults"></div>
+                        </div>
+                        <div class="tab-pane fade" id="match" role="tabpanel">
+                            <div id="matchResults"></div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = tabHtml;
+                displayMatchResults(data.jaccard_matches, 'jaccardResults', true);
+                displayMatchResults(data.matches, 'matchResults');
+            }
+            // 展示匹配结果
+            function displayMatchResults(results, containerId = 'searchResults', isJaccard = false) {
+                if (!Array.isArray(results)) results = [];
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+            if (!results || results.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">未找到匹配的人才</div>';
+                return;
+            }
+                const list = document.createElement('div');
+                list.className = 'mb-3';
+            results.forEach(result => {
+                const card = document.createElement('div');
+                card.className = 'job-card card mb-3';
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="card-title mb-1">${result.name || '未知'}</h5>
+                            <span class="badge bg-success">匹配度: ${result.similarity}%</span>
+                        </div>
+                        <p class="card-text text-muted small mb-2">${result.education || '教育背景未知'}</p>
+                        <p class="card-text small">${result.experience || '暂无工作经历描述'}</p>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewFullResume('${result.filename}')">查看完整简历</button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+                container.appendChild(list);
+                // 整体评分按钮容器
+                const feedbackBtnContainer = document.createElement('div');
+                feedbackBtnContainer.className = 'd-flex justify-content-end mt-3';
+                const feedbackBtn = document.createElement('button');
+                feedbackBtn.className = 'btn btn-success';
+                feedbackBtn.innerHTML = `<i class="bi bi-star"></i> 对本次${isJaccard ? 'Jaccard推荐' : '人才推荐'}整体评分与反馈`;
+                feedbackBtn.onclick = function() {
+                    const ids = results.map(r => r.resume_id);
+                    showFeedbackModal(ids, isJaccard ? 'talent_match_jaccard' : 'talent_match');
+                };
+                feedbackBtnContainer.appendChild(feedbackBtn);
+                container.appendChild(feedbackBtnContainer);
+            }
+            // 评分弹窗函数（整体）
+            function showFeedbackModal(recommendList, scene) {
+                if (window.localStorage.getItem('feedback_' + scene + '_' + recommendList.join(','))) {
+                    alert('您已评价过本次推荐');
+                    return;
+                }
+                const modalId = 'feedbackModal';
+                const oldModal = document.getElementById(modalId);
+                if (oldModal) oldModal.remove();
+                const modalHtml = `
+                    <div class="modal fade" id="${modalId}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">整体评分与反馈</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="feedbackForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">评分（1-5分）</label>
+                                            <select class="form-select" id="feedbackScore" required>
+                                                <option value="">请选择</option>
+                                                <option value="1">1分</option>
+                                                <option value="2">2分</option>
+                                                <option value="3">3分</option>
+                                                <option value="4">4分</option>
+                                                <option value="5">5分</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">备注（选填）</label>
+                                            <textarea class="form-control" id="feedbackComment" rows="3" placeholder="请填写您的建议或意见"></textarea>
+                                        </div>
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                            <button type="submit" class="btn btn-primary">提交</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = new bootstrap.Modal(document.getElementById(modalId));
+                modal.show();
+                document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const score = document.getElementById('feedbackScore').value;
+                    const comment = document.getElementById('feedbackComment').value;
+                    if (!score) {
+                        alert('请选择评分');
+                        return;
+                    }
+                    fetch('/api/feedback/recommend', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            recommend_list: recommendList,
+                            score: score,
+                            comment: comment,
+                            scene: scene
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.localStorage.setItem('feedback_' + scene + '_' + recommendList.join(','), '1');
+                            alert('感谢您的反馈！');
+                            modal.hide();
+                        } else {
+                            alert(data.error || '提交失败');
+                        }
+                    })
+                    .catch(() => alert('提交失败'));
+                });
+        }
+        });
+    </script>
+</body>
+</html>
